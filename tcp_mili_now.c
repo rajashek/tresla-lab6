@@ -136,13 +136,14 @@ static void tcp_veno_state(struct sock *sk, u8 ca_state)
         }
         else if ( ca_state == TCP_CA_Loss ) { 
                 strcpy(w->current_state, "TCP_CA_Loss"); 
-		tp->snd_cwnd = 1000;
+		tp->snd_cwnd = 2200;
         }
         else if ( ca_state == TCP_CA_Recovery ) { 
                 strcpy(w->current_state, "TCP_CA_Recovery");
         }
         else if ( ca_state == TCP_CA_Disorder ) {
                 strcpy(w->current_state, "TCP_CA_Disorder");
+		tp->snd_cwnd += 20;
         }
 
         printk(KERN_INFO "++++++++++++++++++++++++++++++ %s ++++++++++++++++++++++++++++++++\n", w->current_state);
@@ -180,12 +181,20 @@ static void tcp_veno_cwnd_event(struct sock *sk, enum tcp_ca_event event)
 	if (event == CA_EVENT_CWND_RESTART || event == CA_EVENT_TX_START)
 		tcp_veno_init(sk);
 
-	
 
 	printk(KERN_INFO "                tcp:  state=%s\n", w->current_state);
-	printk(KERN_INFO "                tp:   cwnd=%5u.%u ssthresh=%u cwnd_clamp=%u\n", tp->snd_cwnd, tp->snd_cwnd_cnt, tp->snd_ssthresh, tp->snd_cwnd_clamp);
+	printk(KERN_INFO "                tp:   cwnd=%5u.%u ssthresh=%u cwnd_clamp=%u srtt=%u rttvar=%u packets_out=%u\n", tp->snd_cwnd, tp->snd_cwnd_cnt, tp->snd_ssthresh, tp->snd_cwnd_clamp, tp->srtt, tp->rttvar, tp->packets_out);
 	printk(KERN_INFO "                icsk: rto=%u backoff=%u retransmits=%u", icsk->icsk_rto, icsk->icsk_backoff, icsk->icsk_retransmits);
-	printk(KERN_INFO "                RTO_MAX=%u RTO_MIN=%u INIT=%u\n", TCP_RTO_MAX, TCP_RTO_MIN, TCP_TIMEOUT_INIT);
+	printk(KERN_INFO "                kernel: RTO_MAX=%u RTO_MIN=%u INIT=%u\n", TCP_RTO_MAX, TCP_RTO_MIN, TCP_TIMEOUT_INIT);
+	//printk(KERN_INFO "                veno: cntrtt=%u minrtt=%u basertt=%u diff=%u\n", w->cntrtt, w->minrtt, w->basertt, w->diff);
+
+
+	tp->srtt = 200;
+	tp->rttvar = 5;
+
+	if (strcmp(w->current_state, "TCP_CA_Loss")==0) {
+                tp->snd_cwnd = 2200;
+        }
 
 }
 
@@ -198,7 +207,7 @@ u32 tcp_shru_ssthresh(struct sock *sk)
 }
 
 static void tcp_mili_slow_start(struct tcp_sock *tp){
-        tp->snd_cwnd = 1100;
+        tp->snd_cwnd = 2200;
 }
 
 static void tcp_veno_cong_avoid(struct sock *sk, u32 ack, u32 in_flight)
@@ -214,7 +223,7 @@ static void tcp_veno_cong_avoid(struct sock *sk, u32 ack, u32 in_flight)
 
 	 if (diff > gamma && tp->snd_cwnd <= tp->snd_ssthresh) {
 		 //printk(KERN_INFO "ENTERING DIFF LOOP\n");
-                 tp->snd_cwnd = 1100;//change
+                 tp->snd_cwnd = 2200;//change
                  tp->snd_ssthresh = tcp_shru_ssthresh(sk);
 
         } else if (tp->snd_cwnd <= tp->snd_ssthresh) {
@@ -222,15 +231,15 @@ static void tcp_veno_cong_avoid(struct sock *sk, u32 ack, u32 in_flight)
                  tcp_mili_slow_start(tp);
          } else {
                  if (diff > beta) {
-                           tp->snd_cwnd=1100;//change
+                           tp->snd_cwnd=2200;//change
                            tp->snd_ssthresh = tcp_shru_ssthresh(sk);
                   } else if (diff < alpha) {
-                           tp->snd_cwnd=1100;//change
+                           tp->snd_cwnd=2200;//change
                   } else {
                   }
  	}
          if (tp->snd_cwnd < 4)
-                tp->snd_cwnd = 1100;
+                tp->snd_cwnd = 2200;
          else if (tp->snd_cwnd > tp->snd_cwnd_clamp){
                 //printk(KERN_INFO "I AM IN CLAM\n");
 		tp->snd_cwnd = tp->snd_cwnd_clamp;
@@ -240,7 +249,7 @@ static void tcp_veno_cong_avoid(struct sock *sk, u32 ack, u32 in_flight)
                 /* Wipe the slate clean for the next RTT. */
                 veno->cntrtt = 0;
                 veno->minrtt = 0x7fffffff;
-		printk(KERN_INFO "RTT values reset\n");
+		printk(KERN_INFO " ++++ ACK ack=%u in_flight=%u\n", ack, in_flight);
         /* Use normal slow start */
 
 }
@@ -250,12 +259,12 @@ u32 tcp_shru_min_cwnd(const struct sock *sk)
 {
 	
 	struct tcp_sock *tp = tcp_sk(sk);
-	tp->snd_cwnd =1000;
+	tp->snd_cwnd =2200;
  	return tp->snd_cwnd;
 }
 
 u32  tcp_undo_cwnd(struct sock *sk) {
-	return 1000U;
+	return 2200U;
 }
 
 /*static void tcp_veno_set_state(struct sock *sk, u8 new_state) {
@@ -316,4 +325,3 @@ module_exit(tcp_veno_unregister);
 MODULE_AUTHOR("Bin Zhou, Cheng Peng Fu");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("TCP Veno");
-
