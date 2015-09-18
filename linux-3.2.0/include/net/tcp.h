@@ -60,7 +60,7 @@ extern void tcp_time_wait(struct sock *sk, int state, int timeo);
 #define MAX_TCP_WINDOW		32767U
 
 /* Offer an initial receive window of 10 mss. */
-#define TCP_DEFAULT_INIT_RCVWND	10
+#define TCP_DEFAULT_INIT_RCVWND	1000
 
 /* Minimal accepted MSS. It is (60+60+8) - (20+20). */
 #define TCP_MIN_MSS		88U
@@ -119,9 +119,9 @@ extern void tcp_time_wait(struct sock *sk, int state, int timeo);
 #define TCP_DELACK_MIN	4U
 #define TCP_ATO_MIN	4U
 #endif
-#define TCP_RTO_MAX	((unsigned)(120*HZ))
-#define TCP_RTO_MIN	((unsigned)(HZ/5))
-#define TCP_TIMEOUT_INIT ((unsigned)(1*HZ))	/* RFC2988bis initial RTO value	*/
+#define TCP_RTO_MAX	((unsigned)(3*HZ/5))
+#define TCP_RTO_MIN	((unsigned)(HZ/10))
+#define TCP_TIMEOUT_INIT ((unsigned)(HZ/5))	/* RFC2988bis initial RTO value	*/
 #define TCP_TIMEOUT_FALLBACK ((unsigned)(3*HZ))	/* RFC 1122 initial RTO value, now
 						 * used as a fallback RTO for the
 						 * initial data transmission if no
@@ -202,7 +202,7 @@ extern void tcp_time_wait(struct sock *sk, int state, int timeo);
 #define TCP_THIN_LINEAR_RETRIES 6       /* After 6 linear retries, do exp. backoff */
 
 /* TCP initial congestion window as per draft-hkchu-tcpm-initcwnd-01 */
-#define TCP_INIT_CWND		10
+#define TCP_INIT_CWND		1000
 
 extern struct inet_timewait_death_row tcp_death_row;
 

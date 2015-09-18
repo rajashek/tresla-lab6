@@ -2733,6 +2733,7 @@ void tcp_send_delayed_ack(struct sock *sk)
 void tcp_send_ack(struct sock *sk)
 {
 	struct sk_buff *buff;
+	struct sk_buff *buff2;
 
 	/* If we have been reset, we may not send again. */
 	if (sk->sk_state == TCP_CLOSE)
@@ -2751,13 +2752,27 @@ void tcp_send_ack(struct sock *sk)
 		return;
 	}
 
+	buff2 = alloc_skb(MAX_TCP_HEADER, GFP_ATOMIC);
+	if (buff2 == NULL) {
+		inet_csk_schedule_ack(sk);
+		inet_csk(sk)->icsk_ack.ato = TCP_ATO_MIN;
+		inet_csk_reset_xmit_timer(sk, ICSK_TIME_DACK, TCP_DELACK_MAX, TCP_RTO_MAX);
+		return;
+	}
+
 	/* Reserve space for headers and prepare control bits. */
 	skb_reserve(buff, MAX_TCP_HEADER);
 	tcp_init_nondata_skb(buff, tcp_acceptable_seq(sk), TCPHDR_ACK);
 
+	skb_reserve(buff2, MAX_TCP_HEADER);
+	tcp_init_nondata_skb(buff2, tcp_acceptable_seq(sk), TCPHDR_ACK);
+
 	/* Send it off, this clears delayed acks for us. */
 	TCP_SKB_CB(buff)->when = tcp_time_stamp;
 	tcp_transmit_skb(sk, buff, 0, GFP_ATOMIC);
+
+	TCP_SKB_CB(buff2)->when = tcp_time_stamp;
+	tcp_transmit_skb(sk, buff2, 0, GFP_ATOMIC);
 }
 
 /* This routine sends a packet with an out of date sequence
@@ -2855,8 +2870,8 @@ void tcp_send_probe0(struct sock *sk)
 	}
 
 	if (err <= 0) {
-		if (icsk->icsk_backoff < sysctl_tcp_retries2)
-			icsk->icsk_backoff++;
+		//if (icsk->icsk_backoff < sysctl_tcp_retries2)
+		//	icsk->icsk_backoff++;
 		icsk->icsk_probes_out++;
 		inet_csk_reset_xmit_timer(sk, ICSK_TIME_PROBE0,
 					  min(icsk->icsk_rto << icsk->icsk_backoff, TCP_RTO_MAX),
