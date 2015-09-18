@@ -416,7 +416,7 @@ void tcp_retransmit_timer(struct sock *sk)
 	 * implemented ftp to mars will work nicely. We will have to fix
 	 * the 120 second clamps though!
 	 */
-	icsk->icsk_backoff++;
+	//icsk->icsk_backoff++;
 	icsk->icsk_retransmits++;
 
 out_reset_timer:
