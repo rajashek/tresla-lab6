@@ -86,6 +86,7 @@ static void tcp_veno_init(struct sock *sk)
 	if (!veno->first) {
 		veno->first = 1;
 		veno->current_state = (char *) kmalloc(50, GFP_KERNEL);
+		strcpy(veno->current_state, "");
 	}
 
 	tp->srtt = 200;
@@ -133,25 +134,27 @@ static void tcp_veno_state(struct sock *sk, u8 ca_state)
 
 
         if ( ca_state == TCP_CA_Open ) {
-		tcp_set_ca_state(sk, TCP_CA_Recovery);
                 strcpy(w->current_state, "TCP_CA_Open");
         }
         else if ( ca_state == TCP_CA_CWR ) {
+		
+		tp->snd_cwnd = 5500;
 		tcp_set_ca_state(sk, TCP_CA_Recovery);
                 strcpy(w->current_state, "TCP_CA_CWR");
         }
         else if ( ca_state == TCP_CA_Loss ) {
+		tp->snd_cwnd = 5500;
 		tcp_set_ca_state(sk, TCP_CA_Recovery); 
                 strcpy(w->current_state, "TCP_CA_Loss"); 
-		tp->snd_cwnd = 5500;
         }
         else if ( ca_state == TCP_CA_Recovery ) { 
+		tp->snd_cwnd = 5500;
                 strcpy(w->current_state, "TCP_CA_Recovery");
         }
         else if ( ca_state == TCP_CA_Disorder ) {
+		tp->snd_cwnd = 5500;
                 tcp_set_ca_state(sk, TCP_CA_Recovery);
 		strcpy(w->current_state, "TCP_CA_Disorder");
-		tp->snd_cwnd = 5500;
         }
 
         printk(KERN_INFO "++++++++++++++++++++++++++++++ %s ++++++++++++++++++++++++++++++++\n", w->current_state);
