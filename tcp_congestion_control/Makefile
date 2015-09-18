@@ -1,5 +1,5 @@
 
-obj-m += tcp_mili_now.o
+obj-m += tcp_mili.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
